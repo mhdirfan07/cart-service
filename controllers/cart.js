@@ -79,7 +79,7 @@ async function addToCart(req, res) {
     const cart = await create(userId, item); // Memperbaiki pemanggilan create yang benar
     res.status(200).send({
       message: "Item added to cart",
-      cartId: cart.cartId,
+      cartId: userId,
     });
   } catch (error) {
     res.status(500).send(error.message);
