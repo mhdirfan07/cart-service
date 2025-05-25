@@ -76,7 +76,7 @@ async function addToCart(req, res) {
     };
 
     // Memasukkan item ke dalam cart
-    await create(userId, item); // Memperbaiki pemanggilan create yang benar
+    const cart = await create(userId, item); // Memperbaiki pemanggilan create yang benar
     res.status(200).send({
       message: "Item added to cart",
       cartId: cart.cartId,
