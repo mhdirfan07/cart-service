@@ -11,29 +11,34 @@ async function getCart(userId) {
   return doc.data();
 }
 
-// Fungsi untuk menambahkan item ke dalam cart
 async function create(userId, newItem) {
-  const cartRef = db.collection('carts').doc(userId);
-  const cartDoc = await cartRef.get();
+  const cartRef = db.collection('users').doc(userId).collection('cart');
 
-  let items = [];
-  if (cartDoc.exists) {
-    items = cartDoc.data().items || [];
-  }
+  // Cek apakah sudah ada item dengan id yang sama (asumsi id di newItem.id)
+  const existingItemsSnapshot = await cartRef.where('id', '==', newItem.id).get();
 
-  // Cari item dengan id yang sama
-  const existingItemIndex = items.findIndex(item => item.id === newItem.id);
+  if (!existingItemsSnapshot.empty) {
+    // Jika item sudah ada, update quantity
+    const existingDoc = existingItemsSnapshot.docs[0];
+    const existingData = existingDoc.data();
 
-  if (existingItemIndex > -1) {
-    // Jika item sudah ada, tambahkan quantity-nya
-    items[existingItemIndex].quantity = (items[existingItemIndex].quantity || 1) + (newItem.quantity || 1);
+    await existingDoc.ref.update({
+      quantity: (existingData.quantity || 0) + (newItem.quantity || 1)
+    });
+
+    return existingDoc.id;  // Kembalikan id dokumen yang diupdate
   } else {
-    // Jika belum ada, tambahkan item baru
-    items.push(newItem);
-  }
+    // Kalau belum ada, tambah dokumen baru
+    const newDocRef = await cartRef.add({
+      ...newItem,
+      quantity: newItem.quantity || 1
+    });
 
-  await cartRef.set({ items }, { merge: true });
+    return newDocRef.id;  // Kembalikan id dokumen baru
+  }
 }
+
+
 
 // Fungsi untuk menghapus item dari cart
 async function remove(userId, itemId) {
